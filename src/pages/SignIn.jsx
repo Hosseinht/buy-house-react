@@ -18,6 +18,7 @@ const SignIn = () => {
         setFormData((prevState) => ({
             ...prevState,
             [e.target.id]: e.target.value
+
         }))
     }
 
