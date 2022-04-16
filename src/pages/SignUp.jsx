@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {getAuth, createUserWithEmailAndPassword, updateProfile} from "firebase/auth";
+import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import {db} from "../firebase.config";
 import {ReactComponent as ArrowRightIcon} from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from '../assets/svg/visibilityIcon.svg'
@@ -41,6 +42,20 @@ const SignUp = () => {
                 displayName: name
             })
             // we always can get current user from auth.currentUser
+
+            // we don't want to change the formData(name, email, password) state, so we make a copy of it
+            const formDataCopy = {...formData}
+            // we don't want the password get submitted to the database, so we delete it
+            delete formDataCopy.password
+            formDataCopy.timestamp = serverTimestamp()
+
+            // this returns a promise so we use await
+            await setDoc(doc(db, 'users', user.uid), formDataCopy)
+            // db is imported from firebase.config. users is the name of the collection. then we're going to
+            // add user ID which we can get const user = userCredential.user
+            // then we want to add second argument which is going to be the data which we have in formDataCopy
+
+
             navigate('/')
 
         } catch (error) {
