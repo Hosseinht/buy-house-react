@@ -10,7 +10,7 @@ import ListingItem from "../components/ListingItem";
 const Category = () => {
     // here we want to fetch the listing from firebase
     const [listings, setListings] = useState(null)
-    const [loading, setLoading] = useState()
+    const [loading, setLoading] = useState(true)
 
     const params = useParams()
 
