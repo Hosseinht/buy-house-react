@@ -2,6 +2,7 @@ import {useState, useEffect, useRef} from "react";
 import {useNavigate} from "react-router-dom";
 import {getAuth, onAuthStateChanged} from "firebase/auth";
 import {getStorage, ref, uploadBytesResumable, getDownloadURL} from "firebase/storage";
+import {addDoc, collection, serverTimestamp} from "firebase/firestore";
 import {db} from '../firebase.config'
 import {v4 as uuidv4} from 'uuid'
 import Spinner from "../components/Spinner";
@@ -110,7 +111,7 @@ const CreateListing = () => {
             geolocation.lat = latitude
             geolocation.lng = longitude
             location = address
-            console.log(geolocation, location)
+
         }
 
         // Store image in firebase
@@ -145,7 +146,7 @@ const CreateListing = () => {
                         // Handle successful uploads on complete
                         // For instance, get the download URL: https://firebasestorage.googleapis.com/...
                         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                           resolve(downloadURL);
+                            resolve(downloadURL);
                         });
                     }
                 );
@@ -162,11 +163,29 @@ const CreateListing = () => {
             toast.error('Images not uploaded')
             return
         })
-        // it will going to put all the download urls that we resolve up
+        // it will go to put all the download urls that we resolve up
 
-        console.log(imgUrls)
+        // It's going to be the data that we submit to the database
+        const formDataCopy = {
+            // we are using a lot of form data, but we don't want to submit just that. there's some other thins we
+            // want like image URL, geolocation
+            ...formData,
+            imgUrls,
+            geolocation,
+            timestamp: serverTimestamp()
+        }
+
+        delete formDataCopy.images
+        delete formDataCopy.address
+        // we delete address because we used location to get the address
+        location && (formDataCopy.location = location)
+        !formDataCopy.offer && delete formDataCopy.discountedPrice
+
+        const docRed = await addDoc(collection(db, 'listings'), formDataCopy)
 
         setLoading(false)
+        toast.success('Listing saved')
+        navigate(`/category/${formDataCopy.type}/${docRed.id}`)
     }
 
     const onMutate = (e) => {
