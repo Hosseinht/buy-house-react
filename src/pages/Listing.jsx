@@ -61,7 +61,10 @@ const Listing = () => {
                         <div
                             style={{
                                 background: `url(${listing.imgUrls[index]}) center no-repeat`,
-                                backgroundSize: 'cover',
+                                // backgroundSize: 'cover',
+                                objectFit:'contain'
+                                // maxInlineSize: '100%',
+                                // blockSize: 'auto',
 
                             }}
                             className='swiperSlideDiv'>
