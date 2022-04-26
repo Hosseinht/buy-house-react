@@ -11,6 +11,7 @@ const Offers = () => {
     // here we want to fetch the listing from firebase
     const [listings, setListings] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [lastFetchedListing, setLastFetchedListing] = useState(null)
 
     const params = useParams()
 
@@ -27,7 +28,7 @@ const Offers = () => {
                     listingsRef,
                     where('offer', '==', true),
                     orderBy('timestamp', 'desc'),
-                    limit(10)
+                    limit(2)
                 )
                 // categoryName? url in the App.js
                 // what is offer in where? it's our database. in our database there is field name offer
@@ -35,6 +36,11 @@ const Offers = () => {
 
                 // Execute query
                 const querySnap = await getDocs(q)
+
+                const lastVisible = querySnap.docs[querySnap.docs.length - 1]
+                // querySnap.docs.length gives us total number of docs, but we want to get the last one so -1
+
+                setLastFetchedListing(lastVisible)
 
                 const listings = []
 
@@ -57,6 +63,49 @@ const Offers = () => {
         fetchListings()
     }, [])
 
+    const onFetchMoreListings = async () => {
+        try {
+            // Get a reference
+            const listingsRef = collection(db, 'listings')
+
+            // Create a query
+            const q = query(
+                listingsRef,
+                where('offer', '==', true),
+                orderBy('timestamp', 'desc'),
+                startAfter(lastFetchedListing),
+                limit(10)
+            )
+
+
+            // Execute query
+            const querySnap = await getDocs(q)
+
+            // Last visible document
+            const lastVisible = querySnap.docs[querySnap.docs.lenght - 1]
+            // querySnap.docs.lenght gives us total number of docs, but we want to get the last one so -1
+
+            setLastFetchedListing(lastVisible)
+
+            const listings = []
+
+            querySnap.forEach((doc) => {
+                return listings.push({
+                    id: doc.id,
+                    data: doc.data()
+                })
+                // doc.data() is going to give us the data but the ID, the document ID, that's going to
+                // be in this doc.id. it's separate from data. in data there is no ID
+            })
+            setListings((prevState) => [...prevState, ...listings])
+            setLoading(false)
+
+
+        } catch (error) {
+            toast.error('Could not fetch listings')
+        }
+    }
+
     return (
         <div className='category'>
             <header className='pageHeader'>
@@ -74,6 +123,14 @@ const Offers = () => {
                                 ))}
                             </ul>
                         </main>
+
+                        <br/>
+                        <br/>
+                        {lastFetchedListing && (
+                            <p className='loadMore' onClick={onFetchMoreListings}>
+                                Load More
+                            </p>
+                        )}
                     </>
                 ) : (
                     <p>There are no current offers</p>
